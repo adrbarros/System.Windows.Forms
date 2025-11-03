@@ -2621,7 +2621,6 @@ namespace System.Windows.Forms {
 			IntPtr			WholeWindow;
 			IntPtr			ClientWindow;
 			SetWindowValuemask	ValueMask;
-			int[]			atoms;
 
 			hwnd = new Hwnd();
 
@@ -3614,15 +3613,15 @@ namespace System.Windows.Forms {
 
 		internal override SizeF GetAutoScaleSize(Font font)
 		{
-			Graphics	g;
 			float		width;
 			string		magic_string = "The quick brown fox jumped over the lazy dog.";
 			double		magic_number = 44.549996948242189;
 
-			g = Graphics.FromHwnd(FosterParent);
-
-			width = (float) (g.MeasureString (magic_string, font).Width / magic_number);
-			return new SizeF(width, font.Height);
+			using (Graphics g = Graphics.FromHwnd(FosterParent))
+			{
+				width = (float)(g.MeasureString(magic_string, font).Width / magic_number);
+				return new SizeF(width, font.Height);
+			}
 		}
 
 		internal override IntPtr GetParent(IntPtr handle, bool with_owner)
@@ -3732,20 +3731,6 @@ namespace System.Windows.Forms {
 					msg.message = Msg.WM_ENTERIDLE;
 					return true;
 				}
-			}
-
-			if (xevent.type == XEventName.ClientMessage &&
-				xevent.ClientMessageEvent.message_type == (IntPtr)PostAtom &&
-				(Msg)xevent.ClientMessageEvent.ptr2.ToInt32() == Msg.WM_QUIT)
-			{
-				DebugHelper.Indent ();
-				DebugHelper.WriteLine (String.Format ("Got WM_QUIT"));
-				DebugHelper.Unindent ();
-				msg.hwnd = IntPtr.Zero;
-				msg.message = Msg.WM_QUIT;
-				msg.wParam = xevent.ClientMessageEvent.ptr3;
-				msg.lParam = xevent.ClientMessageEvent.ptr2;
-				return false;
 			}
 
 			hwnd = Hwnd.GetObjectFromWindow(xevent.AnyEvent.window);
